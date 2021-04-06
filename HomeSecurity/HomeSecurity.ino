@@ -7,11 +7,14 @@
 #define ir_sensor_pin 0
 #define dip_1_pin 1
 #define dip_2_pin 2
+#define dip_3_pin 11
+#define dip_4_pin 12
 #define piezo_pin 3
 #define door_sensor_pin 10
-#define LED_ldr_pin 11
-#define LED_distance_sensor_pin 12
+#define LED_ldr_pin A0
+#define LED_distance_sensor_pin A1
 #define distance_sensor_pin 13
+#define fsr_pin A4
 #define ldr_pin A5
 
 //Global variable declaration
@@ -21,6 +24,9 @@ int AT_HOME = 0;
 int AWAY = 1;
 
 int system_mode = 0;
+
+boolean[] tasks = new boolean[5];
+int currentTask = 0;
 
 
 void setup() {
@@ -34,10 +40,10 @@ void setup() {
 //this is the code that detects whether or not it is light or dark and operates the LED accordingly
 void lightSensor (){
   if(analogRead(LDR)>500){
-    digitalWrite(LED_ldr_pin,LOW);//turns off the LED when it detects light
+    analogWrite(LED_ldr_pin,1023);//turns off the LED when it detects light
   }
   else{
-    digitalWrite(LED_ldr_pin,HIGH);//turns on the LED when it is dark
+    analogWrite(LED_ldr_pin,0);//turns on the LED when it is dark
   }
 }
 
@@ -75,6 +81,10 @@ void distanceSensor(){
     //Start task: blink LED. Or set a variable that activates that task.
   }
   
+}
+
+void checkTasks(){
+
 }
 
 void loop() {
