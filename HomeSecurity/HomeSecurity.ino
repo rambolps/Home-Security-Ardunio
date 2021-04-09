@@ -26,6 +26,7 @@ int AWAY = 1;
 int system_mode = 0;
 
 boolean[] tasks = new boolean[5];
+long[] finishTimes = new long[5];
 int currentTask = 0;
 
 
@@ -83,11 +84,93 @@ void distanceSensor(){
   
 }
 
+//Checks if tasks should be run
+//Only one piezo task (1-3) can run at a time
+//The currentTask check can be used to set up task on initialization
+//Would do this using a queue or list, but we're unsure if the required libraries (even C++ std libraries) are accessible in Arduino
+//Create a new task using the initiateTask() method
 void checkTasks(){
+  if (tasks[0] == true){
+    indoor_sensor_blink_LED();
+  }
+
+  //Piezo tasks: only 1 can be running at a time to ensure proper piezo functioning
+  if (tasks[1] == true){
+    if (currentTask != 1){
+      resetPiezoPin;
+      currentTask = 1;
+    } 
+  }
+  else if (tasks[2] == true){
+    if (currentTask != 2){
+      resetPiezoPin;
+      currentTask = 2;
+      tone(piezo_pin, 494, 500);  //Chime at B4 for half a second
+    }
+  }
+  else if (tasks[3] == true){
+    if (currentTask != 3){
+      resetPiezoPin;
+      currentTask = 3;
+      tone(piezo_pin, 185, 5000);  //Alarm at F#2 for 5 seconds
+    }
+  }
 
 }
 
+void newTask(int taskID, long finishTime){
+  tasks[taskID] = true;
+  finishTimes[taskID] = finishTime;
+}
+
+void resetPiezoPin(){
+  noTone(piezo_pin);
+  digitalWrite(piezo_pin, LOW);
+}
+
+//Task methods
+
+//Setting finish time to 0 will blink LED, else if the finish time is greater the LED will be on
+void indoor_sensor_blink_LED(){
+  //Blink cycle of 1 second. milliseconds: 0->499 is on, 500->999 is off
+  long task0_time = micros();
+  if (finishTimes[1] != 0 && task0_time < finishTimes[1]){
+    digitalWrite(LED_distance_sensor_pin, HIGH);
+  }
+  else if (finishTimes[1] != 0 && task0_time >= finishTimes[1]){
+    finishTimes[0] = 0;
+  }
+  else if (task0_time%1000 < 500){
+    digitalWrite(LED_distance_sensor_pin, HIGH);
+  }
+  else{
+    digitalWrite(LED_distance_sensor_pin, LOW);
+  }
+}
+
+void door_sensor_on(){  //Task 1. Feel free to use whatever global variables are needed to make this work
+  
+}
+
+void door_sensor_off(){ //Task 2
+  if (micros() > finishTimes[2]){
+    noTone(3);
+    tasks[2] = false;
+  }
+}
+
+void indoor_sensor_away(){  //Task 3
+  if (micros() > finishTimes[3]){
+    noTone(3);
+    tasks[3] = false;
+  }
+}
+
+//END task methods
+
 void loop() {
-  delay(100);
+  checkTasks();
   lightSensor();
+  checkDoor();
+  distanceSensor();
 }
