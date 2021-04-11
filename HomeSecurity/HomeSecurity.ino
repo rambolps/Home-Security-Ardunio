@@ -20,13 +20,14 @@
 //Global variable declaration
 bool doorOpen = false;
 //States of DIP switch (use constant names)
-int AT_HOME = 0;
-int AWAY = 1;
+int OFF = 0;
+int AT_HOME = 1;
+int AWAY = 2;
 
-int system_mode = 0;
+int system_mode = 0;  //0 is off, 1 is at home, 2 is away
 
-boolean[] tasks = new boolean[5];
-long[] finishTimes = new long[5];
+boolean tasks[5];
+long finishTimes[5];
 int currentTask = 0;
 
 
@@ -37,6 +38,7 @@ void setup() {
   pinMode(LED_ldr_pin,OUTPUT);
   pinMode(door_sensor_pin,INPUT);
 }
+
 
 //this is the code that detects whether or not it is light or dark and operates the LED accordingly
 void lightSensor (){
@@ -55,6 +57,7 @@ void checkDoor(){
   } else{
     doorOpen = false;
   }
+  //Note: only begin task 1 (passcode entry) if tasks[4] is false (alarm is NOT currently ringing)
 }
 
 void distanceSensor(){
@@ -95,26 +98,34 @@ void checkTasks(){
   }
 
   //Piezo tasks: only 1 can be running at a time to ensure proper piezo functioning
-  if (tasks[1] == true){
+  if (tasks[4] == true){
+    if (currentTask != 4){
+      resetPiezoPin();
+      currentTask = 4;
+      tone(piezo_pin, 160, 6000);
+    }
+  }
+  else if (tasks[1] == true){
     if (currentTask != 1){
-      resetPiezoPin;
+      resetPiezoPin();
       currentTask = 1;
     } 
   }
   else if (tasks[2] == true){
     if (currentTask != 2){
-      resetPiezoPin;
+      resetPiezoPin();
       currentTask = 2;
       tone(piezo_pin, 494, 500);  //Chime at B4 for half a second
     }
   }
   else if (tasks[3] == true){
     if (currentTask != 3){
-      resetPiezoPin;
+      resetPiezoPin();
       currentTask = 3;
       tone(piezo_pin, 185, 5000);  //Alarm at F#2 for 5 seconds
     }
   }
+  else currentTask = -1;
 
 }
 
@@ -149,7 +160,13 @@ void indoor_sensor_blink_LED(){
 }
 
 void door_sensor_on(){  //Task 1. Feel free to use whatever global variables are needed to make this work
-  
+  //INSERT CHECK CORRECT PASSCODE CODE HERE. SET tasks[1] TO FALSE WHEN DONE.
+
+  long task1_time = micros();
+  if (micros() > finishTimes[1]){
+    newTask(4, task1_time + 6000) //Activates the alarm for 6 seconds and disables the passcode entry task
+    tasks[1] = false;
+  }
 }
 
 void door_sensor_off(){ //Task 2
@@ -163,6 +180,13 @@ void indoor_sensor_away(){  //Task 3
   if (micros() > finishTimes[3]){
     noTone(3);
     tasks[3] = false;
+  }
+}
+
+void door_sensor_incorrectPass(){
+  if (micros() > finishTimes[3]){
+    noTone(3);
+    tasks[4] = false;
   }
 }
 
