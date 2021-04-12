@@ -77,8 +77,11 @@ void lightSensor (){
 void checkDoor(){
   if(digitalRead(door_sensor_pin) == 1){
     doorOpen = true;
-    if (tasks[1] = false && tasks[4] == false){ //Passcode entry task or alarm task are not already active
+    if ((system_mode == AT_HOME || system_mode == AWAY) && !tasks[1] && !tasks[4]){ //Passcode entry task or alarm task are not already active
       newTask(1, micros() + 5000);
+    }
+    else if (system_mode == OFF){
+      newTask(2, micros() + 500);
     }
   } else{
     doorOpen = false;
@@ -102,7 +105,7 @@ void distanceSensor(){
   float distance = duration/5823.77;
   if (distance > 1 && distance < 2){
     if (system_mode == AWAY){
-      tone(piezo_pin, 1000, 5000);  //Sound alarm for 5 seconds
+      newTask(4, micros() + 5000);  //Sound alarm for 5 seconds
       blinkDistSensorLED = false;
     }
   }
@@ -116,7 +119,7 @@ void distanceSensor(){
 //Only one piezo task (1-3) can run at a time
 //The currentTask check can be used to set up task on initialization
 //Would do this using a queue or list, but we're unsure if the required libraries (even C++ std libraries) are accessible in Arduino
-//Create a new task using the initiateTask() method
+//Create a new task using the newTask() method
 void checkTasks(){
   indoor_sensor_blink_LED();
 
@@ -206,7 +209,7 @@ void indoor_sensor_away(){  //Task 3
   }
 }
 
-void door_sensor_incorrectPass(){
+void door_sensor_incorrect_pass(){
   if (micros() > finishTimes[3]){
     noTone(3);
     tasks[4] = false;
