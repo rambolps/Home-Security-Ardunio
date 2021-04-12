@@ -19,24 +19,47 @@
 
 //Global variable declaration
 bool doorOpen = false;
+bool blinkDistSensorLED = true;
+bool overrideDIPSwitch = false;
+int passcode[2] = {LOW, HIGH};
 //States of DIP switch (use constant names)
-int OFF = 0;
-int AT_HOME = 1;
-int AWAY = 2;
+const int OFF = 0;
+const int AT_HOME = 1;
+const int AWAY = 2;
 
 int system_mode = 0;  //0 is off, 1 is at home, 2 is away
 
-boolean tasks[5];
-long finishTimes[5];
+bool tasks[6];
+long finishTimes[6];
 int currentTask = 0;
 
 
 void setup() {
 
   //Set Pin Modes
-  pinMode(ldr_pin,INPUT);
-  pinMode(LED_ldr_pin,OUTPUT);
+  pinMode(ir_sensor_pin, INPUT);
+  pinMode(dip_1_pin, INPUT);
+  pinMode(dip_2_pin, INPUT);
+  pinMode(dip_3_pin, INPUT);
+  pinMode(dip_4_pin, INPUT);
+  pinMode(piezo_pin, OUTPUT);
   pinMode(door_sensor_pin,INPUT);
+  pinMode(LED_ldr_pin,OUTPUT);
+  pinMode(LED_distance_sensor_pin, OUTPUT);
+  pinMode(distance_sensor_pin, INPUT);
+  pinMode(fsr_pin, INPUT);
+  pinMode(ldr_pin,INPUT);
+  
+  //Handle LCD declaration here
+}
+
+//Logic for updating system mode from alarm control panel and IR remote
+void updateSystemMode(){
+  
+}
+
+void forceSensor(){
+
 }
 
 
@@ -54,6 +77,9 @@ void lightSensor (){
 void checkDoor(){
   if(digitalRead(door_sensor_pin) == 1){
     doorOpen = true;
+    if (tasks[1] = false && tasks[4] == false){ //Passcode entry task or alarm task are not already active
+      newTask(1, micros() + 5000);
+    }
   } else{
     doorOpen = false;
   }
@@ -77,12 +103,11 @@ void distanceSensor(){
   if (distance > 1 && distance < 2){
     if (system_mode == AWAY){
       tone(piezo_pin, 1000, 5000);  //Sound alarm for 5 seconds
+      blinkDistSensorLED = false;
     }
-    //Pause/end task: blink LED. Or reset a variable that activates that task.
-    //Start task: set LED high for 5 seconds. Keep track of time in this method, with finish time as a global variable.
   }
   else{
-    //Start task: blink LED. Or set a variable that activates that task.
+    blinkDistSensorLED = true;
   }
   
 }
@@ -93,32 +118,30 @@ void distanceSensor(){
 //Would do this using a queue or list, but we're unsure if the required libraries (even C++ std libraries) are accessible in Arduino
 //Create a new task using the initiateTask() method
 void checkTasks(){
-  if (tasks[0] == true){
-    indoor_sensor_blink_LED();
-  }
+  indoor_sensor_blink_LED();
 
   //Piezo tasks: only 1 can be running at a time to ensure proper piezo functioning
-  if (tasks[4] == true){
+  if (tasks[4]){
     if (currentTask != 4){
       resetPiezoPin();
       currentTask = 4;
       tone(piezo_pin, 160, 6000);
     }
   }
-  else if (tasks[1] == true){
+  else if (tasks[1]){
     if (currentTask != 1){
       resetPiezoPin();
       currentTask = 1;
     } 
   }
-  else if (tasks[2] == true){
+  else if (tasks[2]){
     if (currentTask != 2){
       resetPiezoPin();
       currentTask = 2;
       tone(piezo_pin, 494, 500);  //Chime at B4 for half a second
     }
   }
-  else if (tasks[3] == true){
+  else if (tasks[3]){
     if (currentTask != 3){
       resetPiezoPin();
       currentTask = 3;
@@ -145,13 +168,7 @@ void resetPiezoPin(){
 void indoor_sensor_blink_LED(){
   //Blink cycle of 1 second. milliseconds: 0->499 is on, 500->999 is off
   long task0_time = micros();
-  if (finishTimes[1] != 0 && task0_time < finishTimes[1]){
-    digitalWrite(LED_distance_sensor_pin, HIGH);
-  }
-  else if (finishTimes[1] != 0 && task0_time >= finishTimes[1]){
-    finishTimes[0] = 0;
-  }
-  else if (task0_time%1000 < 500){
+  if (!blinkDistSensorLED || task0_time%1000 < 500){
     digitalWrite(LED_distance_sensor_pin, HIGH);
   }
   else{
@@ -161,11 +178,17 @@ void indoor_sensor_blink_LED(){
 
 void door_sensor_on(){  //Task 1. Feel free to use whatever global variables are needed to make this work
   //INSERT CHECK CORRECT PASSCODE CODE HERE. SET tasks[1] TO FALSE WHEN DONE.
+  //Update passcode
+  if (digitalRead(dip_3_pin) == passcode[1] && digitalRead(dip_4_pin) == passcode[2]){
+    tasks[1] = false;
+    //Display appropriate LCD message
+  }
 
   long task1_time = micros();
   if (micros() > finishTimes[1]){
     newTask(4, task1_time + 6000) //Activates the alarm for 6 seconds and disables the passcode entry task
     tasks[1] = false;
+    //Display appropriate LCD message
   }
 }
 
@@ -193,8 +216,10 @@ void door_sensor_incorrectPass(){
 //END task methods
 
 void loop() {
-  checkTasks();
+  updateACP();
+  forceSensor();
   lightSensor();
   checkDoor();
   distanceSensor();
+  checkTasks();
 }
