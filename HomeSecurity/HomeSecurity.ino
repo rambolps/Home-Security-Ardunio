@@ -20,7 +20,6 @@
 //Global variable declaration
 bool doorOpen = false;
 bool blinkDistSensorLED = true;
-bool overrideDIPSwitch = false;
 int passcode[2] = {LOW, HIGH};
 //States of DIP switch (use constant names)
 const int OFF = 0;
@@ -182,7 +181,7 @@ void indoor_sensor_blink_LED(){
 void door_sensor_on(){  //Task 1. Feel free to use whatever global variables are needed to make this work
   //INSERT CHECK CORRECT PASSCODE CODE HERE. SET tasks[1] TO FALSE WHEN DONE.
   //Update passcode
-  if (digitalRead(dip_3_pin) == passcode[1] && digitalRead(dip_4_pin) == passcode[2]){
+  if (digitalRead(dip_3_pin) == passcode[0] && digitalRead(dip_4_pin) == passcode[1]){
     tasks[1] = false;
     //Display appropriate LCD message
   }
