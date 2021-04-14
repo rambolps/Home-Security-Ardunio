@@ -3,6 +3,11 @@
 //TEJ4M1-1B
 //April 19th, 2021
 
+// include the library code:
+#include <LiquidCrystal.h>
+#include <IRremote.h>
+#include <IRremoteInt.h>
+
 //Define Pin Names
 #define ir_sensor_pin 0
 #define dip_1_pin 1
