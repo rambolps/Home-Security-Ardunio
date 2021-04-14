@@ -9,7 +9,13 @@
             "includePath": [
                 "${workspaceFolder}/**"
             ],
-            "forcedInclude": [],
+            "forcedInclude": [],        
+            "browse": {
+                "path":[
+                    "C:\\Program Files (x86)\\Arduino\\libraries\\LiquidCrystal\\src\\**",
+                    "C:\\Program Files (x86)\\Arduino\\libraries\\IRremote\\**"
+                ]
+            },     
             "cStandard": "c17",
             "cppStandard": "c++17",
             "defines": [
@@ -44,6 +50,12 @@
             "forcedInclude": [
                 "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\cores\\arduino\\Arduino.h"
             ],
+            "browse": {
+                "path":[
+                    "C:\\Program Files (x86)\\Arduino\\libraries\\LiquidCrystal\\src\\**",
+                    "C:\\Program Files (x86)\\Arduino\\libraries\\IRremote\\**"
+                ]
+            },     
             "cStandard": "c11",
             "cppStandard": "c++11",
             "defines": [
