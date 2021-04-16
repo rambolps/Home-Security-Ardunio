@@ -73,6 +73,7 @@ void setup() {
 }
 
 void updateDisplayMode(){
+  if(currentTask == -1){
   if (system_mode == OFF)
   {
     lcd.setCursor(0, 0);
@@ -88,23 +89,23 @@ void updateDisplayMode(){
     lcd.setCursor(0, 0);
     lcd.print("Mode: Away");
   }
-  
+  }
 }
 
-void updateDisplayAlarm(bool AlarmOn, int AlarmMili){
-  if (AlarmOn)
+void updateDisplayAlarm(){
+  if (tasks[4])
   {
     lcd.setCursor(0, 0);
     lcd.print("ALARM TRIGGERED");
     lcd.setCursor(0, 1);
-    lcd.print(AlarmMili);
+    lcd.print((finishTimes[4]-millis())/1000);
   }
-  else
+  else if (tasks[1])
   {
     lcd.setCursor(0, 0);
     lcd.print("ENTER CODE");
     lcd.setCursor(0, 1);
-    lcd.print(AlarmMili);
+    lcd.print((finishTimes[1]-millis())/1000);
   }
 }
 
@@ -323,10 +324,12 @@ void door_sensor_incorrect_pass(){
 //END task methods
 
 void loop() {
-  updateACP();
+  updateSystemMode();
   forceSensor();
   lightSensor();
   checkDoor();
   distanceSensor();
   checkTasks();
+  updateDisplayAlarm();
+  updateDisplayMode();
 }
