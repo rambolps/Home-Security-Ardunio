@@ -24,7 +24,7 @@
 //setup IR Constants
 IRrecv irrecv(RECV_PIN);
 decode_results results;
-
+bool IROveride = false;
 //Setup LCD Pins
 const int rs = 9, en = 8, d4 = 7, d5 = 6, d6 = 5, d7 = 4;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
@@ -111,12 +111,14 @@ void updateDisplayAlarm(bool AlarmOn, int AlarmMili){
 //Logic for updating system mode from alarm control panel and IR remote
 void updateSystemMode(){
   changeIRMode();
+  if(!IROveride){
   readDipMode();
   if(old_dip_mode[0] != dip_mode[0] || old_dip_mode[1] != dip_mode[1])
   {
     changeDipMode();
     old_dip_mode[0] = dip_mode[0];
     old_dip_mode[1] = dip_mode[1];
+  }
   }
 }
 
@@ -150,6 +152,9 @@ void changeIRMode(){
     }
     else if(results.value==0xFD8877){
       system_mode = AWAY;
+    }
+    else if(results.value==0xFD00FF){
+      IROveride = !IROveride;
     }
   }
 }
