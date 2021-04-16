@@ -72,6 +72,42 @@ void setup() {
   irrecv.enableIRIn();
 }
 
+void updateDisplayMode(){
+  if (system_mode == OFF)
+  {
+    lcd.setCursor(0, 0);
+    lcd.print("Mode: OFF");
+  }
+  else if (system_mode == AT_HOME)
+  {
+    lcd.setCursor(0, 0);
+    lcd.print("Mode: At Home");
+  }
+  else //away
+  {
+    lcd.setCursor(0, 0);
+    lcd.print("Mode: Away");
+  }
+  
+}
+
+void updateDisplayAlarm(bool AlarmOn, int AlarmMili){
+  if (AlarmOn)
+  {
+    lcd.setCursor(0, 0);
+    lcd.print("ALARM TRIGGERED");
+    lcd.setCursor(0, 1);
+    lcd.print(AlarmMili);
+  }
+  else
+  {
+    lcd.setCursor(0, 0);
+    lcd.print("ENTER CODE");
+    lcd.setCursor(0, 1);
+    lcd.print(AlarmMili);
+  }
+}
+
 //Logic for updating system mode from alarm control panel and IR remote
 void updateSystemMode(){
   changeIRMode();
@@ -131,6 +167,7 @@ void changeIRMode(){
 void forceSensor(){
 
 }
+
 
 
 //this is the code that detects whether or not it is light or dark and operates the LED accordingly
