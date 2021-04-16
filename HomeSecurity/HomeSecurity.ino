@@ -160,7 +160,9 @@ void changeIRMode(){
 }
 
 void forceSensor(){
-
+  if(system_mode == AWAY && analogRead(fsr_pin) < 100) && !tasks[4]){
+    newTask(4, 6000);
+  }
 }
 
 
