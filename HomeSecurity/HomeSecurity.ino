@@ -8,7 +8,6 @@
 #include <IRremote.h>
 
 //Define Pin Names
-#define RECV_PIN 0
 #define dip_1_pin 1
 #define dip_2_pin 2
 #define dip_3_pin 11
@@ -22,9 +21,11 @@
 #define ldr_pin A5
 
 //setup IR Constants
+int RECV_PIN = 0;
 IRrecv irrecv(RECV_PIN);
 decode_results results;
 bool IROveride = false;
+
 //Setup LCD Pins
 const int rs = 9, en = 8, d4 = 7, d5 = 6, d6 = 5, d7 = 4;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
@@ -51,18 +52,13 @@ int currentTask = 0;
 void setup() {
 
   //Set Pin Modes
-  pinMode(ir_sensor_pin, INPUT);
   pinMode(dip_1_pin, INPUT);
   pinMode(dip_2_pin, INPUT);
   pinMode(dip_3_pin, INPUT);
   pinMode(dip_4_pin, INPUT);
   pinMode(piezo_pin, OUTPUT);
   pinMode(door_sensor_pin,INPUT);
-  pinMode(LED_ldr_pin,OUTPUT);
-  pinMode(LED_distance_sensor_pin, OUTPUT);
   pinMode(distance_sensor_pin, INPUT);
-  pinMode(fsr_pin, INPUT);
-  pinMode(ldr_pin,INPUT);
 
   
   // set up the LCD's number of columns and rows:
@@ -161,7 +157,7 @@ void changeIRMode(){
 }
 
 void forceSensor(){
-  if(system_mode == AWAY && analogRead(fsr_pin) < 100) && !tasks[4]){
+  if(system_mode == AWAY && analogRead(fsr_pin) < 100 && !tasks[4]){
     newTask(4, 6000);
   }
 }
@@ -170,7 +166,7 @@ void forceSensor(){
 
 //this is the code that detects whether or not it is light or dark and operates the LED accordingly
 void lightSensor (){
-  if(analogRead(LDR)>500){
+  if(analogRead(ldr_pin)>500){
     analogWrite(LED_ldr_pin,1023);//turns off the LED when it detects light
   }
   else{
@@ -294,7 +290,7 @@ void door_sensor_on(){  //Task 1. Feel free to use whatever global variables are
 
   long task1_time = millis();
   if (millis() > finishTimes[1]){
-    newTask(4, task1_time + 6000) //Activates the alarm for 6 seconds and disables the passcode entry task
+    newTask(4, task1_time + 6000); //Activates the alarm for 6 seconds and disables the passcode entry task
     tasks[1] = false;
     //Display appropriate LCD message
   }
