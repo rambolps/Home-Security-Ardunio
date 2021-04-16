@@ -112,7 +112,7 @@ void updateDisplayAlarm(bool AlarmOn, int AlarmMili){
 void updateSystemMode(){
   changeIRMode();
   readDipMode();
-  if(old_dip_mode[0] != dip_mode[0] && old_dip_mode[1] != dip_mode[1])
+  if(old_dip_mode[0] != dip_mode[0] || old_dip_mode[1] != dip_mode[1])
   {
     changeDipMode();
     old_dip_mode[0] = dip_mode[0];
@@ -123,16 +123,6 @@ void updateSystemMode(){
 void readDipMode(){
   dip_mode[0] = digitalRead(dip_1_pin);
   dip_mode[1] = digitalRead(dip_2_pin);
-  if(dip_mode[0] == LOW && dip_mode[1] == LOW)
-  {
-    system_mode = OFF;
-  } else if (dip_mode[0] == LOW && dip_mode[1] == HIGH)
-  {
-   system_mode = AT_HOME;
-  } else if (dip_mode[0] == HIGH && dip_mode[1] == LOW)
-  {
-    system_mode = AWAY;
-  }
 }
 
 void changeDipMode(){
