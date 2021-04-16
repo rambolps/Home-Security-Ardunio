@@ -180,10 +180,10 @@ void checkDoor(){
   if(digitalRead(door_sensor_pin) == 1){
     doorOpen = true;
     if ((system_mode == AT_HOME || system_mode == AWAY) && !tasks[1] && !tasks[4]){ //Passcode entry task or alarm task are not already active
-      newTask(1, micros() + 5000);
+      newTask(1, millis() + 5000);
     }
     else if (system_mode == OFF){
-      newTask(2, micros() + 500);
+      newTask(2, millis() + 500);
     }
   } else{
     doorOpen = false;
@@ -201,13 +201,13 @@ void distanceSensor(){
   //Timeout 1 second, pulse duration equal to return time
   pinMode(distance_sensor_pin, INPUT);
   long duration = pulseIn(distance_sensor_pin, HIGH);
-  //duration in microseconds. Distance in m
+  //duration in milliseconds. Distance in m
   //v_s_air = 343.42m/s at 20C, 0% humidity, and 1 atm
   //d = 343.42m/s*(t/2)*(1s/1000000us)
   float distance = duration/5823.77;
   if (distance > 1 && distance < 2){
     if (system_mode == AWAY){
-      newTask(4, micros() + 5000);  //Sound alarm for 5 seconds
+      newTask(4, millis() + 5000);  //Sound alarm for 5 seconds
       blinkDistSensorLED = false;
     }
   }
@@ -272,7 +272,7 @@ void resetPiezoPin(){
 //Setting finish time to 0 will blink LED, else if the finish time is greater the LED will be on
 void indoor_sensor_blink_LED(){
   //Blink cycle of 1 second. milliseconds: 0->499 is on, 500->999 is off
-  long task0_time = micros();
+  long task0_time = millis();
   if (!blinkDistSensorLED || task0_time%1000 < 500){
     digitalWrite(LED_distance_sensor_pin, HIGH);
   }
@@ -289,8 +289,8 @@ void door_sensor_on(){  //Task 1. Feel free to use whatever global variables are
     //Display appropriate LCD message
   }
 
-  long task1_time = micros();
-  if (micros() > finishTimes[1]){
+  long task1_time = millis();
+  if (millis() > finishTimes[1]){
     newTask(4, task1_time + 6000) //Activates the alarm for 6 seconds and disables the passcode entry task
     tasks[1] = false;
     //Display appropriate LCD message
@@ -298,21 +298,21 @@ void door_sensor_on(){  //Task 1. Feel free to use whatever global variables are
 }
 
 void door_sensor_off(){ //Task 2
-  if (micros() > finishTimes[2]){
+  if (millis() > finishTimes[2]){
     noTone(3);
     tasks[2] = false;
   }
 }
 
 void indoor_sensor_away(){  //Task 3
-  if (micros() > finishTimes[3]){
+  if (millis() > finishTimes[3]){
     noTone(3);
     tasks[3] = false;
   }
 }
 
 void door_sensor_incorrect_pass(){
-  if (micros() > finishTimes[3]){
+  if (millis() > finishTimes[3]){
     noTone(3);
     tasks[4] = false;
   }
