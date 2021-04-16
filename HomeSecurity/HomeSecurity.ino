@@ -6,10 +6,9 @@
 // include the library code:
 #include <LiquidCrystal.h>
 #include <IRremote.h>
-#include <IRremoteInt.h>
 
 //Define Pin Names
-#define ir_sensor_pin 0
+#define RECV_PIN 0
 #define dip_1_pin 1
 #define dip_2_pin 2
 #define dip_3_pin 11
@@ -22,10 +21,21 @@
 #define fsr_pin A4
 #define ldr_pin A5
 
+//setup IR Constants
+IRrecv irrecv(RECV_PIN);
+decode_results results;
+
+//Setup LCD Pins
+const int rs = 9, en = 8, d4 = 7, d5 = 6, d6 = 5, d7 = 4;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+
 //Global variable declaration
 bool doorOpen = false;
 bool blinkDistSensorLED = true;
 int passcode[2] = {LOW, HIGH};
+int dip_mode[2] = {LOW, LOW};
+int old_dip_mode[2] = {LOW, LOW};
+
 //States of DIP switch (use constant names)
 const int OFF = 0;
 const int AT_HOME = 1;
@@ -53,13 +63,69 @@ void setup() {
   pinMode(distance_sensor_pin, INPUT);
   pinMode(fsr_pin, INPUT);
   pinMode(ldr_pin,INPUT);
+
   
-  //Handle LCD declaration here
+  // set up the LCD's number of columns and rows:
+  lcd.begin(16, 2);
+
+  //Enable IR sensor
+  irrecv.enableIRIn();
 }
 
 //Logic for updating system mode from alarm control panel and IR remote
 void updateSystemMode(){
-  
+  changeIRMode();
+  readDipMode();
+  if(old_dip_mode[0] != dip_mode[0] && old_dip_mode[1] != dip_mode[1])
+  {
+    changeDipMode();
+    old_dip_mode[0] = dip_mode[0];
+    old_dip_mode[1] = dip_mode[1];
+  }
+}
+
+void readDipMode(){
+  dip_mode[0] = digitalRead(dip_1_pin);
+  dip_mode[1] = digitalRead(dip_2_pin);
+  if(dip_mode[0] == LOW && dip_mode[1] == LOW)
+  {
+    system_mode = OFF;
+  } else if (dip_mode[0] == LOW && dip_mode[1] == HIGH)
+  {
+   system_mode = AT_HOME;
+  } else if (dip_mode[0] == HIGH && dip_mode[1] == LOW)
+  {
+    system_mode = AWAY;
+  }
+}
+
+void changeDipMode(){
+  if(dip_mode[0] == LOW && dip_mode[1] == LOW)
+  {
+    system_mode = OFF;
+  } else if (dip_mode[0] == LOW && dip_mode[1] == HIGH)
+  {
+   system_mode = AT_HOME;
+  } else if (dip_mode[0] == HIGH && dip_mode[1] == LOW)
+  {
+    system_mode = AWAY;
+  }
+}
+
+void changeIRMode(){
+  if (irrecv.decode(&results)) {
+    irrecv.resume();
+    
+    if(results.value==0xFD30CF){
+      system_mode = OFF;
+    }
+    else if(results.value==0xFD08F7){
+      system_mode = AT_HOME;
+    }
+    else if(results.value==0xFD8877){
+      system_mode = AWAY;
+    }
+  }
 }
 
 void forceSensor(){
