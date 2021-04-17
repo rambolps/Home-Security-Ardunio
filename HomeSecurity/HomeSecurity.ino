@@ -229,7 +229,7 @@ void checkTasks(){
     if (currentTask != 4){
       resetPiezoPin();
       currentTask = 4;
-      tone(piezo_pin, 160, 6000);
+      digitalWrite(piezo_pin, HIGH);
     }
   }
   else if (tasks[1]){
@@ -242,14 +242,14 @@ void checkTasks(){
     if (currentTask != 2){
       resetPiezoPin();
       currentTask = 2;
-      tone(piezo_pin, 494, 500);  //Chime at B4 for half a second
+      digitalWrite(piezo_pin, HIGH);  //Chime at B4 for half a second
     }
   }
   else if (tasks[3]){
     if (currentTask != 3){
       resetPiezoPin();
       currentTask = 3;
-      tone(piezo_pin, 185, 5000);  //Alarm at F#2 for 5 seconds
+      digitalWrite(piezo_pin, HIGH);  //Alarm at F#2 for 5 seconds
     }
   }
   else currentTask = -1;
@@ -262,7 +262,6 @@ void newTask(int taskID, long finishTime){
 }
 
 void resetPiezoPin(){
-  noTone(piezo_pin);
   digitalWrite(piezo_pin, LOW);
 }
 
@@ -285,34 +284,32 @@ void door_sensor_on(){  //Task 1. Feel free to use whatever global variables are
   //Update passcode
   if (digitalRead(dip_3_pin) == passcode[0] && digitalRead(dip_4_pin) == passcode[1]){
     tasks[1] = false;
-    //Display appropriate LCD message
   }
 
   long task1_time = millis();
   if (millis() > finishTimes[1]){
     newTask(4, task1_time + 6000); //Activates the alarm for 6 seconds and disables the passcode entry task
     tasks[1] = false;
-    //Display appropriate LCD message
   }
 }
 
 void door_sensor_off(){ //Task 2
   if (millis() > finishTimes[2]){
-    noTone(3);
+    digitalWrite(piezo_pin, LOW);
     tasks[2] = false;
   }
 }
 
 void indoor_sensor_away(){  //Task 3
   if (millis() > finishTimes[3]){
-    noTone(3);
+    digitalWrite(piezo_pin, LOW);
     tasks[3] = false;
   }
 }
 
 void door_sensor_incorrect_pass(){
   if (millis() > finishTimes[3]){
-    noTone(3);
+    digitalWrite(piezo_pin, LOW);
     tasks[4] = false;
   }
 }
