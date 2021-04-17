@@ -8,8 +8,8 @@
 #include <IRremote.h>
 
 //Define Pin Names
-#define dip_1_pin 1
-#define dip_2_pin 2
+#define dip_1_pin A3
+#define dip_2_pin A2
 #define dip_3_pin 11
 #define dip_4_pin 12
 #define piezo_pin 3
@@ -21,7 +21,7 @@
 #define ldr_pin A5
 
 //setup IR Constants
-int RECV_PIN = 0;
+int RECV_PIN = 2;
 IRrecv irrecv(RECV_PIN);
 decode_results results;
 bool IROveride = false;
@@ -50,10 +50,9 @@ int currentTask = -1;
 
 
 void setup() {
+  Serial.begin(9600);
 
   //Set Pin Modes
-  pinMode(dip_1_pin, INPUT);
-  pinMode(dip_2_pin, INPUT);
   pinMode(dip_3_pin, INPUT);
   pinMode(dip_4_pin, INPUT);
   pinMode(piezo_pin, OUTPUT);
@@ -73,20 +72,22 @@ void setup() {
 
 void updateDisplayMode(){
   if(currentTask == -1){
+    lcd.setCursor(0, 0);
+    lcd.print("Mode:           ");
   if (system_mode == OFF)
   {
-    lcd.setCursor(0, 0);
-    lcd.print("Mode: OFF");
+    lcd.setCursor(6, 0);
+    lcd.print("OFF");
   }
   else if (system_mode == AT_HOME)
   {
-    lcd.setCursor(0, 0);
-    lcd.print("Mode: At Home");
+    lcd.setCursor(6, 0);
+    lcd.print("At Home");
   }
   else //away
   {
-    lcd.setCursor(0, 0);
-    lcd.print("Mode: Away");
+    lcd.setCursor(6, 0);
+    lcd.print("Away");
   }
   }
 }
@@ -123,8 +124,16 @@ void updateSystemMode(){
 }
 
 void readDipMode(){
-  dip_mode[0] = digitalRead(dip_1_pin);
-  dip_mode[1] = digitalRead(dip_2_pin);
+  if (analogRead(dip_1_pin) > 100){
+    dip_mode[0] = HIGH;
+  }else{
+    dip_mode[0] = LOW;
+  }
+  if (analogRead(dip_2_pin) > 100){
+    dip_mode[1] = HIGH;
+  }else{
+    dip_mode[1] = LOW;
+  }
 }
 
 void changeDipMode(){
@@ -331,11 +340,12 @@ void door_sensor_incorrect_pass(){
 
 void loop() {
   updateSystemMode();
-  forceSensor();
-  lightSensor();
-  checkDoor();
-  distanceSensor();
-  checkTasks();
+  delay(200);
+  //forceSensor();
+  //lightSensor();
+  //checkDoor();
+  //distanceSensor();
+  //checkTasks();
   updateDisplayAlarm();
   updateDisplayMode();
 }
