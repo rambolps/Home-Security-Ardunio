@@ -24,7 +24,7 @@
 int RECV_PIN = 2;
 IRrecv irrecv(RECV_PIN);
 decode_results results;
-bool IROveride = false;
+bool IROverride = false;
 
 //Setup LCD Pins
 const int rs = 9, en = 8, d4 = 7, d5 = 6, d6 = 5, d7 = 4;
@@ -75,8 +75,7 @@ void updateDisplayMode(){
   if(currentTask == -1){
     lcd.setCursor(0, 0);
     lcd.print("Mode:           ");
-    lcd.setCursor(0, 1);
-    lcd.print("                ");
+    
   if (system_mode == OFF)
   {
     lcd.setCursor(6, 0);
@@ -101,12 +100,16 @@ void updateDisplayAlarm(){
     lcd.setCursor(0, 0);
     lcd.print("WRONG PASSCODE");
     lcd.setCursor(0, 1);
+    lcd.print("                ");
+    lcd.setCursor(0, 1);
     lcd.print((finishTimes[4]-millis())/1000);
   }
   else if (tasks[5])
   {
     lcd.setCursor(0, 0);
     lcd.print("WINDOW OPEN");
+    lcd.setCursor(0, 1);
+    lcd.print("                ");
     lcd.setCursor(0, 1);
     lcd.print((finishTimes[5]-millis())/1000);
   }
@@ -115,12 +118,16 @@ void updateDisplayAlarm(){
     lcd.setCursor(0, 0);
     lcd.print("ENTER PASSCODE");
     lcd.setCursor(0, 1);
+    lcd.print("                ");
+    lcd.setCursor(0, 1);
     lcd.print((finishTimes[1]-millis())/1000);
   }
   else if (tasks[3])
   {
     lcd.setCursor(0, 0);
     lcd.print("MOTION DETECTED");
+    lcd.setCursor(0, 1);
+    lcd.print("                ");
     lcd.setCursor(0, 1);
     lcd.print((finishTimes[3]-millis())/1000);
   }
@@ -129,7 +136,7 @@ void updateDisplayAlarm(){
 //Logic for updating system mode from alarm control panel and IR remote
 void updateSystemMode(){
   changeIRMode();
-  if(!IROveride){
+  if(!IROverride){
   readDipMode();
   if(old_dip_mode[0] != dip_mode[0] || old_dip_mode[1] != dip_mode[1])
   {
@@ -180,7 +187,14 @@ void changeIRMode(){
       system_mode = AWAY;
     }
     else if(results.value==0xFD00FF){
-      IROveride = !IROveride;
+      IROverride = !IROverride;
+      if(IROverride && currentTask == -1){
+        lcd.setCursor(0, 1);
+    	lcd.print("OVERRIDE ACTIVE");
+   	  } else if (currentTask == -1){
+        lcd.setCursor(0, 1);
+      	lcd.print("                ");
+   	  }
     }
   }
 }
@@ -327,6 +341,8 @@ void door_sensor_on(){  //Task 1. Feel free to use whatever global variables are
   
   if (task1_time > finishTimes[1]){
     newTask(4,6000); //Activates the alarm for 6 seconds and disables the passcode entry task
+    lcd.setCursor(0, 1);
+    lcd.print("                ");
     tasks[1] = false;
   }
   if (task1_time % 1000 < 500){
@@ -338,6 +354,8 @@ void door_sensor_on(){  //Task 1. Feel free to use whatever global variables are
   
   if (digitalRead(dip_3_pin) == passcode[0] && digitalRead(dip_4_pin) == passcode[1]){
     digitalWrite(piezo_pin, LOW);
+    lcd.setCursor(0, 1);
+    lcd.print("                ");
     tasks[1] = false;
     currentTask = -1;
   }
@@ -346,6 +364,8 @@ void door_sensor_on(){  //Task 1. Feel free to use whatever global variables are
 void door_sensor_off(){ //Task 2
   if (millis() > finishTimes[2]){
     digitalWrite(piezo_pin, LOW);
+    lcd.setCursor(0, 1);
+    lcd.print("                ");
     tasks[2] = false;
     currentTask = -1;
   }
@@ -354,6 +374,8 @@ void door_sensor_off(){ //Task 2
 void indoor_sensor_away(){  //Task 3
   if (millis() > finishTimes[3]){
     digitalWrite(piezo_pin, LOW);
+    lcd.setCursor(0, 1);
+    lcd.print("                ");
     tasks[3] = false;
     currentTask = -1;
   }
@@ -362,6 +384,8 @@ void indoor_sensor_away(){  //Task 3
 void door_sensor_incorrect_pass(){
   if (millis() > finishTimes[4]){
     digitalWrite(piezo_pin, LOW);
+    lcd.setCursor(0, 1);
+    lcd.print("                ");
     tasks[4] = false;
     currentTask = -1;
   }
@@ -370,6 +394,8 @@ void door_sensor_incorrect_pass(){
 void window_open(){
   if (millis() > finishTimes[5]){
     digitalWrite(piezo_pin, LOW);
+    lcd.setCursor(0, 1);
+    lcd.print("                ");
     tasks[5] = false;
     currentTask = -1;
   }
