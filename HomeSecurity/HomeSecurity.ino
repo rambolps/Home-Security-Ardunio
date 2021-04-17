@@ -258,7 +258,7 @@ void checkTasks(){
 
 void newTask(int taskID, long finishTime){
   tasks[taskID] = true;
-  finishTimes[taskID] = finishTime;
+  finishTimes[taskID] = millis() + finishTime;
 }
 
 void resetPiezoPin(){
