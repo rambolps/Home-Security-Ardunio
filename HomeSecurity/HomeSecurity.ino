@@ -46,7 +46,7 @@ int system_mode = 0;  //0 is off, 1 is at home, 2 is away
 
 bool tasks[6];
 long finishTimes[6];
-int currentTask = 0;
+int currentTask = -1;
 
 
 void setup() {
