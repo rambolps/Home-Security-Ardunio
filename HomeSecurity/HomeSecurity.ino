@@ -32,6 +32,7 @@ LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 //Global variable declaration
 bool doorOpen = false;
+bool oldDoorOpen = false;
 bool blinkDistSensorLED = true;
 int passcode[2] = {LOW, HIGH};
 int dip_mode[2] = {LOW, LOW};
@@ -74,6 +75,8 @@ void updateDisplayMode(){
   if(currentTask == -1){
     lcd.setCursor(0, 0);
     lcd.print("Mode:           ");
+    lcd.setCursor(0, 1);
+    lcd.print("                ");
   if (system_mode == OFF)
   {
     lcd.setCursor(6, 0);
@@ -96,16 +99,30 @@ void updateDisplayAlarm(){
   if (tasks[4])
   {
     lcd.setCursor(0, 0);
-    lcd.print("ALARM TRIGGERED");
+    lcd.print("WRONG PASSCODE");
     lcd.setCursor(0, 1);
     lcd.print((finishTimes[4]-millis())/1000);
+  }
+  else if (tasks[5])
+  {
+    lcd.setCursor(0, 0);
+    lcd.print("WINDOW OPEN");
+    lcd.setCursor(0, 1);
+    lcd.print((finishTimes[5]-millis())/1000);
   }
   else if (tasks[1])
   {
     lcd.setCursor(0, 0);
-    lcd.print("ENTER CODE");
+    lcd.print("ENTER PASSCODE");
     lcd.setCursor(0, 1);
     lcd.print((finishTimes[1]-millis())/1000);
+  }
+  else if (tasks[3])
+  {
+    lcd.setCursor(0, 0);
+    lcd.print("MOTION DETECTED");
+    lcd.setCursor(0, 1);
+    lcd.print((finishTimes[3]-millis())/1000);
   }
 }
 
@@ -170,7 +187,7 @@ void changeIRMode(){
 
 void forceSensor(){
   if(system_mode == AWAY && analogRead(fsr_pin) < 100 && !tasks[4]){
-    newTask(4, 6000);
+    newTask(5, 6000);
   }
 }
 
@@ -178,11 +195,11 @@ void forceSensor(){
 
 //this is the code that detects whether or not it is light or dark and operates the LED accordingly
 void lightSensor (){
-  if(analogRead(ldr_pin)>500){
-    analogWrite(LED_ldr_pin,1023);//turns off the LED when it detects light
+  if(analogRead(ldr_pin)<525){
+    analogWrite(LED_ldr_pin,0);//turns off the LED when it detects light
   }
   else{
-    analogWrite(LED_ldr_pin,0);//turns on the LED when it is dark
+    analogWrite(LED_ldr_pin,1023);//turns on the LED when it is dark
   }
 }
 
@@ -190,24 +207,25 @@ void lightSensor (){
 void checkDoor(){
   if(digitalRead(door_sensor_pin) == 1){
     doorOpen = true;
-    if ((system_mode == AT_HOME || system_mode == AWAY) && !tasks[1] && !tasks[4]){ //Passcode entry task or alarm task are not already active
-      newTask(1, millis() + 5000);
+    if ((system_mode == AT_HOME || system_mode == AWAY) && !tasks[1] && !tasks[4] && oldDoorOpen != doorOpen){ //Passcode entry task or alarm task are not already active
+      newTask(1, 5000);
     }
-    else if (system_mode == OFF){
-      newTask(2, millis() + 500);
+    else if (system_mode == OFF && oldDoorOpen != doorOpen){
+      newTask(2, 500);
     }
   } else{
     doorOpen = false;
   }
+  oldDoorOpen = doorOpen;
   //Note: only begin task 1 (passcode entry) if tasks[4] is false (alarm is NOT currently ringing)
 }
 
 void distanceSensor(){
   pinMode(distance_sensor_pin, OUTPUT);
   digitalWrite(distance_sensor_pin, LOW);
-  delay(2);
+  delayMicroseconds(2);
   digitalWrite(distance_sensor_pin, HIGH);
-  delay(10);
+  delayMicroseconds(10);
   digitalWrite(distance_sensor_pin, LOW);
   //Timeout 1 second, pulse duration equal to return time
   pinMode(distance_sensor_pin, INPUT);
@@ -215,11 +233,13 @@ void distanceSensor(){
   //duration in milliseconds. Distance in m
   //v_s_air = 343.42m/s at 20C, 0% humidity, and 1 atm
   //d = 343.42m/s*(t/2)*(1s/1000000us)
-  float distance = duration/5823.77;
-  if (distance > 1 && distance < 2){
-    if (system_mode == AWAY){
-      newTask(4, millis() + 5000);  //Sound alarm for 5 seconds
-      blinkDistSensorLED = false;
+  //float distance = duration/5823.77;
+  float distance = duration*0.0307;
+  Serial.println(distance);
+  if (distance > 100 && distance < 200){
+    blinkDistSensorLED = false;
+    if (system_mode == AWAY && !tasks[3]){
+      newTask(3,5000);  //Sound alarm for 5 seconds
     }
   }
   else{
@@ -244,6 +264,14 @@ void checkTasks(){
       digitalWrite(piezo_pin, HIGH);
     }
     door_sensor_incorrect_pass();
+  }
+  else if (tasks[5]){
+    if (currentTask != 5){
+      resetPiezoPin();
+      digitalWrite(piezo_pin, HIGH);
+      currentTask = 5;
+    }
+    window_open();
   }
   else if (tasks[1]){
     if (currentTask != 1){
@@ -287,24 +315,18 @@ void resetPiezoPin(){
 void indoor_sensor_blink_LED(){
   //Blink cycle of 1 second. milliseconds: 0->499 is on, 500->999 is off
   if (!blinkDistSensorLED || millis() % 1000 < 500){
-    digitalWrite(LED_distance_sensor_pin, HIGH);
+    analogWrite(LED_distance_sensor_pin, 1023);
   }
   else{
-    digitalWrite(LED_distance_sensor_pin, LOW);
+    analogWrite(LED_distance_sensor_pin, 0);
   }
 }
 
 void door_sensor_on(){  //Task 1. Feel free to use whatever global variables are needed to make this work
-  //INSERT CHECK CORRECT PASSCODE CODE HERE. SET tasks[1] TO FALSE WHEN DONE.
-  //Update passcode
-  if (digitalRead(dip_3_pin) == passcode[0] && digitalRead(dip_4_pin) == passcode[1]){
-    tasks[1] = false;
-  }
-
   long task1_time = millis();
   
   if (task1_time > finishTimes[1]){
-    newTask(4, task1_time + 6000); //Activates the alarm for 6 seconds and disables the passcode entry task
+    newTask(4,6000); //Activates the alarm for 6 seconds and disables the passcode entry task
     tasks[1] = false;
   }
   if (task1_time % 1000 < 500){
@@ -313,12 +335,19 @@ void door_sensor_on(){  //Task 1. Feel free to use whatever global variables are
   else{
     digitalWrite(piezo_pin, LOW);
   }
+  
+  if (digitalRead(dip_3_pin) == passcode[0] && digitalRead(dip_4_pin) == passcode[1]){
+    digitalWrite(piezo_pin, LOW);
+    tasks[1] = false;
+    currentTask = -1;
+  }
 }
 
 void door_sensor_off(){ //Task 2
   if (millis() > finishTimes[2]){
     digitalWrite(piezo_pin, LOW);
     tasks[2] = false;
+    currentTask = -1;
   }
 }
 
@@ -326,6 +355,7 @@ void indoor_sensor_away(){  //Task 3
   if (millis() > finishTimes[3]){
     digitalWrite(piezo_pin, LOW);
     tasks[3] = false;
+    currentTask = -1;
   }
 }
 
@@ -333,6 +363,15 @@ void door_sensor_incorrect_pass(){
   if (millis() > finishTimes[4]){
     digitalWrite(piezo_pin, LOW);
     tasks[4] = false;
+    currentTask = -1;
+  }
+}
+
+void window_open(){
+  if (millis() > finishTimes[5]){
+    digitalWrite(piezo_pin, LOW);
+    tasks[5] = false;
+    currentTask = -1;
   }
 }
 
@@ -340,12 +379,12 @@ void door_sensor_incorrect_pass(){
 
 void loop() {
   updateSystemMode();
-  delay(200);
-  //forceSensor();
-  //lightSensor();
-  //checkDoor();
-  //distanceSensor();
-  //checkTasks();
+  forceSensor();
+  lightSensor();
+  checkDoor();
+  distanceSensor();
+  checkTasks();
   updateDisplayAlarm();
   updateDisplayMode();
+  delay(100);
 }
