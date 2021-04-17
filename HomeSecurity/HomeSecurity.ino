@@ -66,6 +66,9 @@ void setup() {
 
   //Enable IR sensor
   irrecv.enableIRIn();
+  
+  //Start LED task for distance sensor
+  newTask(0, 0);
 }
 
 void updateDisplayMode(){
@@ -274,8 +277,7 @@ void resetPiezoPin(){
 //Setting finish time to 0 will blink LED, else if the finish time is greater the LED will be on
 void indoor_sensor_blink_LED(){
   //Blink cycle of 1 second. milliseconds: 0->499 is on, 500->999 is off
-  long task0_time = millis();
-  if (!blinkDistSensorLED || task0_time%1000 < 500){
+  if (!blinkDistSensorLED || millis() % 1000 < 500){
     digitalWrite(LED_distance_sensor_pin, HIGH);
   }
   else{
@@ -291,9 +293,16 @@ void door_sensor_on(){  //Task 1. Feel free to use whatever global variables are
   }
 
   long task1_time = millis();
-  if (millis() > finishTimes[1]){
+  
+  if (task1_time > finishTimes[1]){
     newTask(4, task1_time + 6000); //Activates the alarm for 6 seconds and disables the passcode entry task
     tasks[1] = false;
+  }
+  if (task1_time % 1000 < 500){
+    digitalWrite(piezo_pin, HIGH);
+  }
+  else{
+    digitalWrite(piezo_pin, LOW);
   }
 }
 
@@ -312,7 +321,7 @@ void indoor_sensor_away(){  //Task 3
 }
 
 void door_sensor_incorrect_pass(){
-  if (millis() > finishTimes[3]){
+  if (millis() > finishTimes[4]){
     digitalWrite(piezo_pin, LOW);
     tasks[4] = false;
   }
