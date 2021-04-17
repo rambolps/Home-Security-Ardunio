@@ -231,12 +231,14 @@ void checkTasks(){
       currentTask = 4;
       digitalWrite(piezo_pin, HIGH);
     }
+    door_sensor_incorrect_pass();
   }
   else if (tasks[1]){
     if (currentTask != 1){
       resetPiezoPin();
       currentTask = 1;
     } 
+    door_sensor_on();
   }
   else if (tasks[2]){
     if (currentTask != 2){
@@ -244,6 +246,7 @@ void checkTasks(){
       currentTask = 2;
       digitalWrite(piezo_pin, HIGH);  //Chime at B4 for half a second
     }
+    door_sensor_off();
   }
   else if (tasks[3]){
     if (currentTask != 3){
@@ -251,6 +254,7 @@ void checkTasks(){
       currentTask = 3;
       digitalWrite(piezo_pin, HIGH);  //Alarm at F#2 for 5 seconds
     }
+    indoor_sensor_away();
   }
   else currentTask = -1;
 
