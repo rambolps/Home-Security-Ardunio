@@ -43,58 +43,73 @@ const int OFF = 0;
 const int AT_HOME = 1;
 const int AWAY = 2;
 
+
 int system_mode = 0;  //0 is off, 1 is at home, 2 is away. When comparing with system_mode, use constant names defined above.
 
 bool tasks[6];  //Tracks whether a task should be running or not. Currently, tasks 1-5 are used, and 0 is unused.
 long finishTimes[6];  //Tracks at what time a task should end in milliseconds after program start. Corresponding array to tasks.
 int currentTask = -1; //Tracks which piezo task is currently running. -1 if no tasks are running.
 
+//This is the setup method it runs once, at the start of the program
+void setup()
+{
 
-void setup() {
+  //This tells the Arduino to get ready to exchange messages with the Serial Monitor at a data rate of 9600 bits per second.
   Serial.begin(9600);
 
   //Set Pin Modes. Analog pins do not need to be defined. IR and LCD pins are handled when constructing the library objects.
   pinMode(dip_3_pin, INPUT);
   pinMode(dip_4_pin, INPUT);
   pinMode(piezo_pin, OUTPUT);
-  pinMode(door_sensor_pin,INPUT);
+  pinMode(door_sensor_pin, INPUT);
   pinMode(distance_sensor_pin, INPUT);
 
-  
   // set up the LCD's number of columns and rows:
   lcd.begin(16, 2);
 
   //Enable IR sensor
   irrecv.enableIRIn();
-  
+
   //Start LED task for distance sensor
   newTask(0, 0);
 }
 
-void updateDisplayMode(){
-  if(currentTask == -1){
+//This function updates the LCD, and displays the current method, when no other tasks are running
+void updateDisplayMode()
+{
+
+  //This ensures that the function only runs, when no other tasks are running
+  if (currentTask == -1)
+  {
+    //Prints "MODE:" with blank spaces for the entire span of the first line
     lcd.setCursor(0, 0);
     lcd.print("Mode:           ");
-    
-  if (system_mode == OFF)
-  {
-    lcd.setCursor(6, 0);
-    lcd.print("OFF");
-  }
-  else if (system_mode == AT_HOME)
-  {
-    lcd.setCursor(6, 0);
-    lcd.print("At Home");
-  }
-  else //away
-  {
-    lcd.setCursor(6, 0);
-    lcd.print("Away");
-  }
+
+    //Prints "OFF" on the first line
+    if (system_mode == OFF)
+    {
+      lcd.setCursor(6, 0);
+      lcd.print("OFF");
+    }
+    //Prints "AT HOME" on the first line
+    else if (system_mode == AT_HOME)
+    {
+      lcd.setCursor(6, 0);
+      lcd.print("At Home");
+    }
+    //Prints "AWAY" on the first line
+    else //away
+    {
+      lcd.setCursor(6, 0);
+      lcd.print("Away");
+    }
   }
 }
 
-void updateDisplayAlarm(){
+//Updates the LCD, and displays information and the time remaining, for the task that is currently running
+void updateDisplayAlarm()
+{
+  //Displays when you enter the wrong passcode
   if (tasks[4])
   {
     lcd.setCursor(0, 0);
@@ -102,8 +117,9 @@ void updateDisplayAlarm(){
     lcd.setCursor(0, 1);
     lcd.print("                ");
     lcd.setCursor(0, 1);
-    lcd.print((finishTimes[4]-millis())/1000);
+    lcd.print((finishTimes[4] - millis()) / 1000);
   }
+  //Displays when the window opens in away mode
   else if (tasks[5])
   {
     lcd.setCursor(0, 0);
@@ -111,8 +127,9 @@ void updateDisplayAlarm(){
     lcd.setCursor(0, 1);
     lcd.print("                ");
     lcd.setCursor(0, 1);
-    lcd.print((finishTimes[5]-millis())/1000);
+    lcd.print((finishTimes[5] - millis()) / 1000);
   }
+  //displays when the door opens in the AT HOME or AWAY mode
   else if (tasks[1])
   {
     lcd.setCursor(0, 0);
@@ -120,8 +137,9 @@ void updateDisplayAlarm(){
     lcd.setCursor(0, 1);
     lcd.print("                ");
     lcd.setCursor(0, 1);
-    lcd.print((finishTimes[1]-millis())/1000);
+    lcd.print((finishTimes[1] - millis()) / 1000);
   }
+  //Displays when the ultrasonic distance sensor is triggered in the AWAY or AT HOME modes
   else if (tasks[3])
   {
     lcd.setCursor(0, 0);
@@ -129,72 +147,117 @@ void updateDisplayAlarm(){
     lcd.setCursor(0, 1);
     lcd.print("                ");
     lcd.setCursor(0, 1);
-    lcd.print((finishTimes[3]-millis())/1000);
+    lcd.print((finishTimes[3] - millis()) / 1000);
   }
 }
 
 //Logic for updating system mode from alarm control panel and IR remote
-void updateSystemMode(){
+void updateSystemMode()
+{
+  //Change the system mode using the IR sensor
   changeIRMode();
-  if(!IROverride){
-  readDipMode();
-  if(old_dip_mode[0] != dip_mode[0] || old_dip_mode[1] != dip_mode[1])
+
+  //Only allows chnages using the dip switch if the IR Override is off
+  if (!IROverride)
   {
-    changeDipMode();
-    old_dip_mode[0] = dip_mode[0];
-    old_dip_mode[1] = dip_mode[1];
-  }
+    //Gets input from the dip switch
+    readDipMode();
+
+    //Checks if the previous mode the dipswitch was in, is the same as the mode it is currently in
+    if (old_dip_mode[0] != dip_mode[0] || old_dip_mode[1] != dip_mode[1])
+    {
+      //Changes the system mode using the dip switch
+      changeDipMode();
+
+      //Sets the old dip switch mode to the new dip switch mode
+      old_dip_mode[0] = dip_mode[0];
+      old_dip_mode[1] = dip_mode[1];
+    }
   }
 }
 
-void readDipMode(){
-  if (analogRead(dip_1_pin) > 100){
+//Gets input from the dip switch
+void readDipMode()
+{
+  if (analogRead(dip_1_pin) > 100)
+  {
     dip_mode[0] = HIGH;
-  }else{
+  }
+  else
+  {
     dip_mode[0] = LOW;
   }
-  if (analogRead(dip_2_pin) > 100){
+  if (analogRead(dip_2_pin) > 100)
+  {
     dip_mode[1] = HIGH;
-  }else{
+  }
+  else
+  {
     dip_mode[1] = LOW;
   }
 }
 
-void changeDipMode(){
-  if(dip_mode[0] == LOW && dip_mode[1] == LOW)
+//Sets the system mode using the input from the dip switch
+void changeDipMode()
+{
+  if (dip_mode[0] == LOW && dip_mode[1] == LOW)
   {
     system_mode = OFF;
-  } else if (dip_mode[0] == LOW && dip_mode[1] == HIGH)
+  }
+  else if (dip_mode[0] == LOW && dip_mode[1] == HIGH)
   {
-   system_mode = AT_HOME;
-  } else if (dip_mode[0] == HIGH && dip_mode[1] == LOW)
+    system_mode = AT_HOME;
+  }
+  else if (dip_mode[0] == HIGH && dip_mode[1] == LOW)
   {
     system_mode = AWAY;
   }
 }
 
-void changeIRMode(){
-  if (irrecv.decode(&results)) {
+//Sets the System mode and controls the IR Override, using input from the IR Sensor
+//The IR sensor is controled by the IR Remote
+void changeIRMode()
+{
+
+  //Runs when the IR sensor gets a signal from the remote and interrupts the program. It converts the signal to hexidecimal
+  if (irrecv.decode(&results))
+  {
+    //continues lisenting for IR signals
     irrecv.resume();
-    
-    if(results.value==0xFD30CF){
+
+    //Sets the system mode depending on which button on the IR remote is pushed
+    if (results.value == 0xFD30CF) //Button 0
+    {
       system_mode = OFF;
     }
-    else if(results.value==0xFD08F7){
+    else if (results.value == 0xFD08F7) //Button 1
+    {
       system_mode = AT_HOME;
     }
-    else if(results.value==0xFD8877){
+    else if (results.value == 0xFD8877) //Button 2
+    {
       system_mode = AWAY;
     }
-    else if(results.value==0xFD00FF){
+    //This runs when the power button on the IR remote is pushed, it controls the IR Override
+    else if (results.value == 0xFD00FF) //Power Button
+    {
+      //Toggles the IR Override
       IROverride = !IROverride;
-      if(IROverride && currentTask == -1){
+
+      //Runs when there is no task running and IR Override is enabled
+      if (IROverride && currentTask == -1)
+      {
+        //Displays "OVERRIDE ACTIVE" on the second row of the LCD
         lcd.setCursor(0, 1);
-    	lcd.print("OVERRIDE ACTIVE");
-   	  } else if (currentTask == -1){
+        lcd.print("OVERRIDE ACTIVE");
+      }
+      //Runs when IR Override is disabled and no task is running
+      else if (currentTask == -1)
+      {
+        //Prints blank spaces to the second row of the LCD
         lcd.setCursor(0, 1);
-      	lcd.print("                ");
-   	  }
+        lcd.print("                ");
+      }
     }
   }
 }
@@ -207,36 +270,44 @@ void forceSensor(){
   }
 }
 
-
-
 //this is the code that detects whether or not it is light or dark and operates the LED accordingly
 void lightSensor (){
   if(analogRead(ldr_pin)<525){  //voltage of 525/1024*5V occurs when slider is approximately at half brightness
     analogWrite(LED_ldr_pin,0);//turns off the LED when it detects light
   }
-  else{
-    analogWrite(LED_ldr_pin,1023);//turns on the LED when it is dark
+  else
+  {
+    analogWrite(LED_ldr_pin, 1023); //turns on the LED when it is dark
   }
 }
 
-
-void checkDoor(){
-  if(digitalRead(door_sensor_pin) == 1){
+//Logic for checking the door
+void checkDoor()
+{
+  //Runs if the door pin is HIGH
+  if (digitalRead(door_sensor_pin) == 1)
+  {
     doorOpen = true;
-    if ((system_mode == AT_HOME || system_mode == AWAY) && !tasks[1] && !tasks[4] && oldDoorOpen != doorOpen){ //Passcode entry task or alarm task are not already active
+    if ((system_mode == AT_HOME || system_mode == AWAY) && !tasks[1] && !tasks[4] && oldDoorOpen != doorOpen)
+    { //Passcode entry task or alarm task are not already active
       newTask(1, 5000);
     }
-    else if (system_mode == OFF && oldDoorOpen != doorOpen){
+    else if (system_mode == OFF && oldDoorOpen != doorOpen)
+    {
       newTask(2, 500);
     }
-  } else{
+  }
+  else
+  {
     doorOpen = false;
   }
   oldDoorOpen = doorOpen;
   //Note: only begin task 1 (passcode entry) if tasks[4] is false (alarm is NOT currently ringing)
 }
 
-void distanceSensor(){
+//Logic for the distance sensor
+void distanceSensor()
+{
   pinMode(distance_sensor_pin, OUTPUT);
   digitalWrite(distance_sensor_pin, LOW);
   delayMicroseconds(2);
@@ -251,16 +322,18 @@ void distanceSensor(){
   //d = 343.42m/s*(t/2)*(1s/1000000us) = t*0.00017171 = t/5823.77. This was tested to be almost perfectly accurate on the practice assignment using the distance sensor.
   float distance = duration*0.0307; //This constant is experimentally determined to make the distance sensor work with timer lag. We're not sure if this is system-dependent.
   Serial.println(distance);
-  if (distance > 100 && distance < 200){
+  if (distance > 100 && distance < 200)
+  {
     blinkDistSensorLED = false;
-    if (system_mode == AWAY && !tasks[3]){
-      newTask(3,5000);  //Sound alarm for 5 seconds
+    if (system_mode == AWAY && !tasks[3])
+    {
+      newTask(3, 5000); //Sound alarm for 5 seconds
     }
   }
-  else{
+  else
+  {
     blinkDistSensorLED = true;
   }
-  
 }
 
 //Handles running of tasks, which are methods that tell the piezo or other components to do something. Other code can also see what tasks are currently running for decisions.
@@ -299,14 +372,14 @@ void checkTasks(){
     if (currentTask != 1){
       resetPiezoPin();
       currentTask = 1;
-    } 
+    }
     door_sensor_on();
   }
   else if (tasks[2]){ //door sensor chime
     if (currentTask != 2){
       resetPiezoPin();
       currentTask = 2;
-      digitalWrite(piezo_pin, HIGH);  //Chime at B4 for half a second
+      digitalWrite(piezo_pin, HIGH); //Chime at B4 for half a second
     }
     door_sensor_off();
   }
@@ -314,12 +387,12 @@ void checkTasks(){
     if (currentTask != 3){
       resetPiezoPin();
       currentTask = 3;
-      digitalWrite(piezo_pin, HIGH);  //Alarm at F#2 for 5 seconds
+      digitalWrite(piezo_pin, HIGH); //Alarm at F#2 for 5 seconds
     }
     indoor_sensor_away();
   }
-  else currentTask = -1;
-
+  else
+    currentTask = -1;
 }
 
 //Sets a task to run.
@@ -343,7 +416,8 @@ void indoor_sensor_blink_LED(){
   if (!blinkDistSensorLED || millis() % 1000 < 500){
     analogWrite(LED_distance_sensor_pin, 1023);
   }
-  else{
+  else
+  {
     analogWrite(LED_distance_sensor_pin, 0);
   }
 }
@@ -363,7 +437,8 @@ void door_sensor_on(){
   if (task1_time % 1000 < 500){
     digitalWrite(piezo_pin, HIGH);
   }
-  else{
+  else
+  {
     digitalWrite(piezo_pin, LOW);
   }
   
