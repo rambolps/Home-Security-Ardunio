@@ -28,14 +28,14 @@ bool IROverride = false;
 
 //Setup LCD Pins
 const int rs = 9, en = 8, d4 = 7, d5 = 6, d6 = 5, d7 = 4;
-LiquidCrystal lcd(rs, en, d4, d5, d6, d7); 
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 //Global variable declaration
 bool doorOpen = false;
 bool oldDoorOpen = false; //Previous state of doorOpen. Used to check for change of state.
 bool blinkDistSensorLED = true;
-int passcode[2] = {LOW, HIGH};  //Correct passcode
-int dip_mode[2] = {LOW, LOW}; //Current state of DIP switches 1 and 2
+int passcode[2] = {LOW, HIGH};    //Correct passcode
+int dip_mode[2] = {LOW, LOW};     //Current state of DIP switches 1 and 2
 int old_dip_mode[2] = {LOW, LOW}; //Previous state of DIP switches 1 and 2. Used to check for change of state
 
 //States of DIP switch (use constant names)
@@ -43,10 +43,9 @@ const int OFF = 0;
 const int AT_HOME = 1;
 const int AWAY = 2;
 
+int system_mode = 0; //0 is off, 1 is at home, 2 is away. When comparing with system_mode, use constant names defined above.
 
-int system_mode = 0;  //0 is off, 1 is at home, 2 is away. When comparing with system_mode, use constant names defined above.
-
-bool tasks[6];  //Tracks whether a task should be running or not. Currently, tasks 1-5 are used, and 0 is unused.
+bool tasks[6];        //Tracks whether a task should be running or not. Currently, tasks 1-5 are used, and 0 is unused.
 long finishTimes[6];  //Tracks at what time a task should end in milliseconds after program start. Corresponding array to tasks.
 int currentTask = -1; //Tracks which piezo task is currently running. -1 if no tasks are running.
 
@@ -262,18 +261,22 @@ void changeIRMode()
   }
 }
 
-//Window sensor, additional feature. If window is closed, the force sensor detects force. 
+//Window sensor, additional feature. If window is closed, the force sensor detects force.
 //If the window is open, the force sensor detects no force and if the system mode is set to away, the alarm is sounded.
-void forceSensor(){
-  if(system_mode == AWAY && analogRead(fsr_pin) < 100 && !tasks[4]){
+void forceSensor()
+{
+  if (system_mode == AWAY && analogRead(fsr_pin) < 100 && !tasks[4])
+  {
     newTask(5, 6000);
   }
 }
 
 //this is the code that detects whether or not it is light or dark and operates the LED accordingly
-void lightSensor (){
-  if(analogRead(ldr_pin)<525){  //voltage of 525/1024*5V occurs when slider is approximately at half brightness
-    analogWrite(LED_ldr_pin,0);//turns off the LED when it detects light
+void lightSensor()
+{
+  if (analogRead(ldr_pin) < 525)
+  {                              //voltage of 525/1024*5V occurs when slider is approximately at half brightness
+    analogWrite(LED_ldr_pin, 0); //turns off the LED when it detects light
   }
   else
   {
@@ -320,7 +323,7 @@ void distanceSensor()
   //duration in milliseconds. Distance in m
   //v_s_air = 343.42m/s at 20C, 0% humidity, and 1 atm
   //d = 343.42m/s*(t/2)*(1s/1000000us) = t*0.00017171 = t/5823.77. This was tested to be almost perfectly accurate on the practice assignment using the distance sensor.
-  float distance = duration*0.0307; //This constant is experimentally determined to make the distance sensor work with timer lag. We're not sure if this is system-dependent.
+  float distance = duration * 0.0307; //This constant is experimentally determined to make the distance sensor work with timer lag. We're not sure if this is system-dependent.
   Serial.println(distance);
   if (distance > 100 && distance < 200)
   {
@@ -348,43 +351,54 @@ void distanceSensor()
  4: Alarm for door sensor, correct passcode not entered after 5 seconds
  5: Alarm for window sensor (force sensor), force is 0, system_mode == AWAY
 */
-void checkTasks(){
+void checkTasks()
+{
   indoor_sensor_blink_LED();
 
   //Piezo tasks: only 1 can be running at a time to ensure proper piezo functioning. First tasks in conditional statement have higher run priority.
-  if (tasks[4]){  //door sensor alarm
-    if (currentTask != 4){
+  if (tasks[4])
+  { //door sensor alarm
+    if (currentTask != 4)
+    {
       resetPiezoPin();
       currentTask = 4;
       digitalWrite(piezo_pin, HIGH);
     }
     door_sensor_incorrect_pass();
   }
-  else if (tasks[5]){ //window sensor alarm
-    if (currentTask != 5){
+  else if (tasks[5])
+  { //window sensor alarm
+    if (currentTask != 5)
+    {
       resetPiezoPin();
       digitalWrite(piezo_pin, HIGH);
       currentTask = 5;
     }
     window_open();
   }
-  else if (tasks[1]){ //door sensor passcode entry prompt
-    if (currentTask != 1){
+  else if (tasks[1])
+  { //door sensor passcode entry prompt
+    if (currentTask != 1)
+    {
       resetPiezoPin();
       currentTask = 1;
     }
     door_sensor_on();
   }
-  else if (tasks[2]){ //door sensor chime
-    if (currentTask != 2){
+  else if (tasks[2])
+  { //door sensor chime
+    if (currentTask != 2)
+    {
       resetPiezoPin();
       currentTask = 2;
       digitalWrite(piezo_pin, HIGH); //Chime at B4 for half a second
     }
     door_sensor_off();
   }
-  else if (tasks[3]){ //ultrasonic distance sensor alarm
-    if (currentTask != 3){
+  else if (tasks[3])
+  { //ultrasonic distance sensor alarm
+    if (currentTask != 3)
+    {
       resetPiezoPin();
       currentTask = 3;
       digitalWrite(piezo_pin, HIGH); //Alarm at F#2 for 5 seconds
@@ -398,22 +412,26 @@ void checkTasks(){
 //Sets a task to run.
 //int taskID: the task to set to run. Refer to documentation on void checkTasks()
 //int finishTime: how long the task should run for, in milliseconds. The finish time of the task is recorded as the current time + finishTime
-void newTask(int taskID, long finishTime){
+void newTask(int taskID, long finishTime)
+{
   tasks[taskID] = true;
   finishTimes[taskID] = millis() + finishTime;
 }
 
 //Note: this had more stuff when using the tone() method. Kept for possible return of functionality.
-void resetPiezoPin(){
+void resetPiezoPin()
+{
   digitalWrite(piezo_pin, LOW);
 }
 
 //Task methods
 
 //Controls state of LED for the ultrasonic distance sensor
-void indoor_sensor_blink_LED(){
+void indoor_sensor_blink_LED()
+{
   //Blink cycle of 1 second. milliseconds: 0->499 is on, 500->999 is off. If blinkDistSensorLED is false, the LED is always on.
-  if (!blinkDistSensorLED || millis() % 1000 < 500){
+  if (!blinkDistSensorLED || millis() % 1000 < 500)
+  {
     analogWrite(LED_distance_sensor_pin, 1023);
   }
   else
@@ -423,27 +441,31 @@ void indoor_sensor_blink_LED(){
 }
 
 //Task 1: door sensor passcode entry prompt
-void door_sensor_on(){
+void door_sensor_on()
+{
   long task1_time = millis();
-  
-  if (task1_time > finishTimes[1]){ //If correct passcode has not been entered after 6 seconds
-    newTask(4,6000); //Activates the alarm for 6 seconds and disables the passcode entry task
+
+  if (task1_time > finishTimes[1])
+  {                   //If correct passcode has not been entered after 6 seconds
+    newTask(4, 6000); //Activates the alarm for 6 seconds and disables the passcode entry task
     lcd.setCursor(0, 1);
     lcd.print("                ");
     tasks[1] = false;
   }
-  
+
   //Controls beeping of piezo during passcode entry, beep cycle of 1 second.
-  if (task1_time % 1000 < 500){
+  if (task1_time % 1000 < 500)
+  {
     digitalWrite(piezo_pin, HIGH);
   }
   else
   {
     digitalWrite(piezo_pin, LOW);
   }
-  
+
   //Checks if correct passcode is entered.
-  if (digitalRead(dip_3_pin) == passcode[0] && digitalRead(dip_4_pin) == passcode[1]){
+  if (digitalRead(dip_3_pin) == passcode[0] && digitalRead(dip_4_pin) == passcode[1])
+  {
     digitalWrite(piezo_pin, LOW);
     lcd.setCursor(0, 1);
     lcd.print("                ");
@@ -454,8 +476,10 @@ void door_sensor_on(){
 
 //Task 2: door sensor chime
 //Here, just ends the task when the finishTime is passed
-void door_sensor_off(){ 
-  if (millis() > finishTimes[2]){
+void door_sensor_off()
+{
+  if (millis() > finishTimes[2])
+  {
     digitalWrite(piezo_pin, LOW);
     lcd.setCursor(0, 1);
     lcd.print("                ");
@@ -466,8 +490,10 @@ void door_sensor_off(){
 
 //Task 3: indoor sensor alarm
 //Here, just ends the task when the finishTime is passed
-void indoor_sensor_away(){  
-  if (millis() > finishTimes[3]){
+void indoor_sensor_away()
+{
+  if (millis() > finishTimes[3])
+  {
     digitalWrite(piezo_pin, LOW);
     lcd.setCursor(0, 1);
     lcd.print("                ");
@@ -478,8 +504,10 @@ void indoor_sensor_away(){
 
 //Task 4: door sensor alarm
 //Here, just ends the task when finish time is passed
-void door_sensor_incorrect_pass(){
-  if (millis() > finishTimes[4]){
+void door_sensor_incorrect_pass()
+{
+  if (millis() > finishTimes[4])
+  {
     digitalWrite(piezo_pin, LOW);
     lcd.setCursor(0, 1);
     lcd.print("                ");
@@ -490,8 +518,10 @@ void door_sensor_incorrect_pass(){
 
 //Task 5: window sensor alarm
 //Here, just ends the task when finish time is passed
-void window_open(){
-  if (millis() > finishTimes[5]){
+void window_open()
+{
+  if (millis() > finishTimes[5])
+  {
     digitalWrite(piezo_pin, LOW);
     lcd.setCursor(0, 1);
     lcd.print("                ");
@@ -502,8 +532,9 @@ void window_open(){
 
 //END task methods
 
-//main loop
-void loop() {
+//main loop, runs until the program finishes executing
+void loop()
+{
   updateSystemMode();
   forceSensor();
   lightSensor();

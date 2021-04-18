@@ -1,4 +1,3 @@
 {
-    "board": "arduino:avr:uno",
-    "sketch": "HomeSecurity\\HomeSecurity.ino"
+    "board": "arduino:avr:uno"
 }
