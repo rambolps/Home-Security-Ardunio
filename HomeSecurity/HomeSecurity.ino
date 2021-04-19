@@ -122,7 +122,7 @@ void updateDisplayAlarm()
   else if (tasks[5])
   {
     lcd.setCursor(0, 0);
-    lcd.print("WINDOW OPEN");
+    lcd.print("WINDOW OPEN     ");
     lcd.setCursor(0, 1);
     lcd.print("                ");
     lcd.setCursor(0, 1);
@@ -132,7 +132,7 @@ void updateDisplayAlarm()
   else if (tasks[1])
   {
     lcd.setCursor(0, 0);
-    lcd.print("ENTER PASSCODE");
+    lcd.print("ENTER PASSCODE  ");
     lcd.setCursor(0, 1);
     lcd.print("                ");
     lcd.setCursor(0, 1);
@@ -142,7 +142,7 @@ void updateDisplayAlarm()
   else if (tasks[3])
   {
     lcd.setCursor(0, 0);
-    lcd.print("MOTION DETECTED");
+    lcd.print("MOTION DETECTED ");
     lcd.setCursor(0, 1);
     lcd.print("                ");
     lcd.setCursor(0, 1);
@@ -324,7 +324,6 @@ void distanceSensor()
   //v_s_air = 343.42m/s at 20C, 0% humidity, and 1 atm
   //d = 343.42m/s*(t/2)*(1s/1000000us) = t*0.00017171 = t/5823.77. This was tested to be almost perfectly accurate on the practice assignment using the distance sensor.
   float distance = duration * 0.0307; //This constant is experimentally determined to make the distance sensor work with timer lag. We're not sure if this is system-dependent.
-  Serial.println(distance);
   if (distance > 100 && distance < 200)
   {
     blinkDistSensorLED = false;
